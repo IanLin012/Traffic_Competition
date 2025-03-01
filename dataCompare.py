@@ -5,8 +5,6 @@ import pandas as pd
 min_mileage = 021.7
 max_mileage = 044.7
 
-# Initialize variables for calculation
-column_recored = 0
 
 average_speed_file = 'Datas/2024_新店-土城.csv'
 route_geometry_file = 'Datas/2025_Route_Geometry/N0030_北區_主線.csv'
@@ -22,7 +20,7 @@ route_dict = {}
 with open(temp_file, 'w') as f:
     f.write("調查日期,國道名稱,國道編號,方向,樁號,里程,原始坐標E,原始坐標N,經緯度坐標Lon,經緯度坐標Lat,鋪面種類,路幅寬,全路幅寬,車道數,車道1寬,車道2寬,車道3寬,車道4寬,車道5寬,車道6寬,槽化區,槽化區寬,內路肩,內路肩寬,外路肩,外路肩寬,輔助車道1,輔助車道1寬,輔助車道2,輔助車道2寬,輔助車道3,輔助車道3寬,避車彎,曲率半徑,縱向坡度,橫向坡度\n")
     for index, row in route_geometry.iterrows():
-        mileage = (float)(str(row['里程'])[:4])/10
+        mileage = (float)(row['里程'])/1000
         if min_mileage <= mileage <= max_mileage:
             f.write(str(row['調查日期']) + "," + str(row['國道名稱']) + "," + str(row['國道編號']) + "," + str(row['方向']) + "," + str(row['樁號']) + "," + str(row['里程']) + "," + str(row['原始坐標E']) + "," + str(row['原始坐標N']) + "," + str(row['經緯度坐標Lon']) + "," + str(row['經緯度坐標Lat']) + "," + str(row['鋪面種類']) + "," + str(row['路幅寬']) + "," + str(row['全路幅寬']) + "," + str(row['車道數']) + "," + str(row['車道1寬']) + "," + str(row['車道2寬']) + "," + str(row['車道3寬']) + "," + str(row['車道4寬']) + "," + str(row['車道5寬']) + "," + str(row['車道6寬']) + "," + str(row['槽化區']) + "," + str(row['槽化區寬']) + "," + str(row['內路肩']) + "," + str(row['內路肩寬']) + "," + str(row['外路肩']) + "," + str(row['外路肩寬']) + "," + str(row['輔助車道1']) + "," + str(row['輔助車道1寬']) + "," + str(row['輔助車道2']) + "," + str(row['輔助車道2寬']) + "," + str(row['輔助車道3']) + "," + str(row['輔助車道3寬']) + "," + str(row['避車彎']) + "," + str(row['曲率半徑']) + "," + str(row['縱向坡度']) + "," + str(row['橫向坡度']) + "\n")
     f.close()
@@ -34,6 +32,7 @@ with open(export_file, 'w') as f:
     f.close()
 
 # Step 2: Get gantry information and record mileage between
+column_recored = 0
 for index, row in average_speed.iterrows():
     gantry_from = row['GantryFrom']
     gantry_to = row['GantryTo']
@@ -67,7 +66,7 @@ for index, row in average_speed.iterrows():
         lateral_slope = 0
         
         for index, row in route_geometry.iterrows():
-            mileage = (float)(str(row['里程'])[:4])/10
+            mileage = (float)(row['里程'])/1000
             if (direction == 'N'):
                 if (row['方向'] == '往北') & (mileage_to < mileage < mileage_from):
                     section_count += 1
