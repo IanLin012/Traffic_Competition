@@ -30,13 +30,14 @@ route_geometry = pd.read_csv(temp_file, encoding='utf-8')
 
 # Create new file to store the data
 with open(export_file, 'w') as f:
-    f.write("方向,里程起,里程迄,路段數,鋪面種類,路幅寬,全路幅寬,車道數最小,車道數最大,車道1寬,車道2寬,車道3寬,車道4寬,車道5寬,車道6寬,槽化區,內路肩,內路肩寬,外路肩,外路肩寬,輔助車道最小,輔助車道最大,輔助車道1寬,輔助車道2寬,輔助車道3寬,避車彎,曲率半徑,縱向坡度,橫向坡度")
+    f.write("時間戳,方向,里程起,里程迄,路段數,鋪面種類,路幅寬,全路幅寬,車道數最小,車道數最大,車道1寬,車道2寬,車道3寬,車道4寬,車道5寬,車道6寬,槽化區,內路肩,內路肩寬,外路肩,外路肩寬,輔助車道最小,輔助車道最大,輔助車道1寬,輔助車道2寬,輔助車道3寬,避車彎,曲率半徑,縱向坡度,橫向坡度")
     f.close()
 
 # Step 2: Get gantry information and record mileage between
 column_recored = 0
 with tqdm(total=average_speed.shape[0]) as pbar:
     for index, row in average_speed.iterrows():
+        time_stamp = row['TimeStamp']
         gantry_from = row['GantryFrom']
         gantry_to = row['GantryTo']
         direction = row['GantryFrom'][-1]
@@ -195,7 +196,7 @@ with tqdm(total=average_speed.shape[0]) as pbar:
     # Step 5: Write the data to a new file
         with open(export_file, 'a') as f:
             column_recored += 1
-            f.write(row_data + "\n")
+            f.write(time_stamp + "," + row_data + "\n")
             f.close()
         
         pbar.update(1)
