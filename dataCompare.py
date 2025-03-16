@@ -3,13 +3,13 @@ from tqdm import tqdm
 
 # Settings
 # Define the range of mileage to be analyzed
-min_mileage = 021.7
-max_mileage = 044.7
+min_mileage = 50 #206.6 #021.7
+max_mileage = 75 #223.5 #044.7
 
 
-average_speed_file = 'Data/2024_新店-土城.csv'
+average_speed_file = 'Data/2024_鶯歌系統-高原假日資料.csv'
 route_geometry_file = 'Data/2025_Route_Geometry/N0030_北區_主線.csv'
-export_file = 'Data/Export/2024_新店-土城_combined.csv'
+export_file = 'Data/Export/2024_鶯歌系統-高原假日資料_combined.csv'
 temp_file = 'Data/Export/.temp'
 # Step 1: Read data from average_speed.csv and route_geometry.csv
 
