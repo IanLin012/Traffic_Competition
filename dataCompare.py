@@ -3,13 +3,13 @@ from tqdm import tqdm
 
 # Settings
 # Define the range of mileage to be analyzed
-min_mileage = 50 #206.6 #021.7
-max_mileage = 75 #223.5 #044.7
+min_mileage = 21.7 #50 #206.6 #021.7
+max_mileage = 44.7 #75 #223.5 #044.7
 
 
-average_speed_file = 'Data/2024_鶯歌系統-高原假日資料.csv'
+average_speed_file = 'Data/2024_新店-土城平日資料.csv'
 route_geometry_file = 'Data/2025_Route_Geometry/N0030_北區_主線.csv'
-export_file = 'Data/Export/2024_鶯歌系統-高原假日資料_combined.csv'
+export_file = 'Data/Export/2024_新店-土城平日資料_combined.csv'
 temp_file = 'Data/Export/.temp'
 # Step 1: Read data from average_speed.csv and route_geometry.csv
 
@@ -41,6 +41,8 @@ with tqdm(total=average_speed.shape[0]) as pbar:
         gantry_from = row['GantryFrom']
         gantry_to = row['GantryTo']
         direction = row['GantryFrom'][-1]
+        if (direction != row['GantryTo'][-1]) :
+            continue
         mileage_from = (float)(gantry_from[3:7])/10
         mileage_to = (float)(gantry_to[3:7])/10
         # Read from dictionary and skip Step 3 if found
