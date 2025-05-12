@@ -5,8 +5,8 @@ import shutil
 
 # Step 1: Assign date variables
 year = 2025
-month = 2
-day = 28
+month = 5
+day = 9
 
 # Format date components
 date_str = f"{year:04d}{month:02d}{day:02d}"

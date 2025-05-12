@@ -4,17 +4,18 @@ from datetime import datetime
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend for remote/server
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 # --- Configurable Variables ---
-year, month, day = 2025, 2, 28
+year, month, day = 2025, 5, 9
 static_file = "data/VD/VD_static.xml"
 real_time_folder = f"data/VD/{year:04d}/{month:02d}/{day:02d}/"
 plot_dir = "plot/"
-start_gantry = "0005"
-end_gantry = "0050"
+start_gantry = "0217"
+end_gantry = "0447"
 direction = "N"
 highway_no = "3"
-interval = 2
+interval = 2 # ? min
 
 # Ensure plot directory exists
 os.makedirs(plot_dir, exist_ok=True)
@@ -76,72 +77,74 @@ print(f"Filtered VDIDs: {list(vdid_info.keys())}")
 # --- Step 2: Parse Real-Time Files and Collect Metrics ---
 
 vehicle_types = ["S", "L", "T"]
-metrics = {vt: {"Speed": [], "Volume": [], "Occupancy": []} for vt in vehicle_types}
+metrics = {vt: {"Speed": [], "Volume": [], "Occupancy": [], "DataCount": 0} for vt in vehicle_types}
 timestamps = []
 
-for hour in range(24):
-    print(f"Processing hour {hour}...")
-    for minute in range(0,60,interval):
-        ts = f"{hour:02d}{minute:02d}"
-        file_path = os.path.join(real_time_folder, f"VDLive_{ts}.xml")
+with tqdm(total=24*60/interval) as pbar:
+    for hour in range(24):
+        # print(f"Processing hour {hour}...")
+        for minute in range(0,60,interval):
+            ts = f"{hour:02d}{minute:02d}"
+            file_path = os.path.join(real_time_folder, f"VDLive_{ts}.xml")
 
-        if not os.path.exists(file_path) or os.path.getsize(file_path) < 100:
-            continue
-
-        try:
-            tree = ET.parse(file_path)
-            root = tree.getroot()
-        except ET.ParseError as e:
-            print(f"Parse error in {file_path}: {e}")
-            continue
-
-        # Temp accumulators for this timestamp
-        temp_data = {vt: {"Speed": [], "Volume": [], "Occupancy": []} for vt in vehicle_types}
-        found_data = False
-
-        for vd in root.findall(".//ns:VDLive", ns):
-            vdid = vd.find("ns:VDID", ns)
-            if vdid is None or vdid.text not in vdid_info:
+            if not os.path.exists(file_path) or os.path.getsize(file_path) < 100:
                 continue
 
-            found_data = True
+            try:
+                tree = ET.parse(file_path)
+                root = tree.getroot()
+            except ET.ParseError as e:
+                print(f"Parse error in {file_path}: {e}")
+                continue
 
-            for lane in vd.findall(".//ns:Lane", ns):
-                occ_elem = lane.find("ns:Occupancy", ns)
-                try:
-                    lane_occupancy = int(occ_elem.text) if occ_elem is not None else 0
-                    lane_occupancy = max(lane_occupancy, 0)
-                except:
-                    lane_occupancy = 0
+            # Temp accumulators for this timestamp
+            temp_data = {vt: {"Speed": [], "Volume": [], "Occupancy": [], "DataCount": 0} for vt in vehicle_types}
+            found_data = False
 
-                for veh in lane.findall(".//ns:Vehicle", ns):
-                    vt_elem = veh.find("ns:VehicleType", ns)
-                    if vt_elem is None:
-                        continue
-                    vt = vt_elem.text
-                    if vt not in vehicle_types:
-                        continue
+            for vd in root.findall(".//ns:VDLive", ns):
+                vdid = vd.find("ns:VDID", ns)
+                if vdid is None or vdid.text not in vdid_info:
+                    continue
 
+                found_data = True
+
+                for lane in vd.findall(".//ns:Lane", ns):
+                    occ_elem = lane.find("ns:Occupancy", ns)
                     try:
-                        volume = max(int(veh.find("ns:Volume", ns).text), 0)
-                        speed = max(int(veh.find("ns:Speed", ns).text), 0)
+                        lane_occupancy = int(occ_elem.text) if occ_elem is not None else 0
+                        lane_occupancy = max(lane_occupancy, 0)
                     except:
-                        continue
+                        lane_occupancy = 0
 
-                    temp_data[vt]["Speed"].append(speed)
-                    temp_data[vt]["Volume"].append(volume)
-                    temp_data[vt]["Occupancy"].append(lane_occupancy)
+                    for veh in lane.findall(".//ns:Vehicle", ns):
+                        vt_elem = veh.find("ns:VehicleType", ns)
+                        if vt_elem is None:
+                            continue
+                        vt = vt_elem.text
+                        if vt not in vehicle_types:
+                            continue
 
-        if found_data:
-            timestamps.append(datetime(year, month, day, hour, minute))
-            for vt in vehicle_types:
-                def avg(x): return sum(x) / len(x) if x else 0
-                def total(x): return sum(x)
+                        try:
+                            volume = max(int(veh.find("ns:Volume", ns).text), 0)
+                            speed = max(int(veh.find("ns:Speed", ns).text), 0)
+                        except:
+                            continue
 
-                metrics[vt]["Speed"].append(avg(temp_data[vt]["Speed"]))
-                metrics[vt]["Volume"].append(total(temp_data[vt]["Volume"]))
-                metrics[vt]["Occupancy"].append(avg(temp_data[vt]["Occupancy"]))
+                        temp_data[vt]["DataCount"] += 1 if volume != 0 else 0
+                        temp_data[vt]["Speed"].append(speed)
+                        temp_data[vt]["Volume"].append(volume)
+                        temp_data[vt]["Occupancy"].append(lane_occupancy)
 
+            if found_data:
+                timestamps.append(datetime(year, month, day, hour, minute))
+                for vt in vehicle_types:
+                    def avg(x): return sum(x) / len(x) if x else 0
+                    def total(x): return sum(x)
+
+                    metrics[vt]["Speed"].append(total(temp_data[vt]["Speed"]) / temp_data[vt]["DataCount"])
+                    metrics[vt]["Volume"].append(total(temp_data[vt]["Volume"]))
+                    metrics[vt]["Occupancy"].append(avg(temp_data[vt]["Occupancy"]))
+            pbar.update(1)
 # --- Step 3: Plot ---
 
 fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)

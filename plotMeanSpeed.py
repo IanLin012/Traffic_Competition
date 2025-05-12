@@ -6,7 +6,7 @@ from datetime import datetime
 # variables
 year = 2025
 month = 5
-day = 10
+day = 9
 # gatePairId = "01F0029N-01F0017N"
 highway_no = "3"
 start_gantry = "0217"
